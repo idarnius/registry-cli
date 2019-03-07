@@ -775,6 +775,7 @@ class TestArgParser(unittest.TestCase):
                      "--delete-all",
                      "--layers",
                      "--delete-by-hours", "24",
+                     "--delete-older","10",
                      "--keep-by-hours", "24",
                      "--digest-method", "GET"]
         args = parse_args(args_list)
@@ -790,6 +791,7 @@ class TestArgParser(unittest.TestCase):
         self.assertEqual(args.host, "hostname")
         self.assertEqual(args.keep_tags, ["keep1", "keep2"])
         self.assertEqual(args.delete_by_hours, "24")
+        self.assertEqual(args.delete_older, "10")
         self.assertEqual(args.keep_by_hours, "24")
         self.assertEqual(args.digest_method, "GET")
 

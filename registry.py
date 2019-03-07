@@ -300,6 +300,28 @@ class Registry:
 
         return tag_digest
 
+    def get_datetime_tags(self, registry, image_name, tags_list):
+        def newer(tag):
+            image_config = registry.get_tag_config(image_name, tag)
+            if image_config == []:
+                print("tag not found")
+                return None
+            image_age = registry.get_image_age(image_name, image_config)
+            if image_age == []:
+                print("timestamp not found")
+                return None
+            return {
+                "tag": tag,
+                "datetime": dt.strptime(image_age[:-4], "%Y-%m-%dT%H:%M:%S.%f")
+            }
+
+        print('---------------------------------')
+        p = ThreadPool(4)
+        result = list(x for x in p.map(newer, tags_list) if x)
+        p.close()
+        p.join()
+        return result
+
     def delete_tag(self, image_name, tag, dry_run, tag_digests_to_ignore):
         if dry_run:
             print('would delete tag {0}'.format(tag))
@@ -327,7 +349,6 @@ class Registry:
 
         print("done")
         return True
-
 
     def list_tag_layers(self, image_name, tag):
         layers_result = self.send("/v2/{0}/manifests/{1}".format(
@@ -526,6 +547,14 @@ for more detail on garbage collection read here:
         default=False,
         nargs='?',
         metavar='Hours')
+
+    parser.add_argument(
+        '--delete-older',
+        help=('Will delete all tags that are older than {0}'
+              'of all images').format(CONST_KEEP_LAST_VERSIONS),
+        default=CONST_KEEP_LAST_VERSIONS,
+        nargs='+',
+        metavar='N')
 
     parser.add_argument(
         '--keep-by-hours',
@@ -797,6 +826,16 @@ def main_loop(args):
             keep_tags.extend(args.keep_tags)
             delete_tags_by_age(registry, image_name, args.dry_run,
                                args.delete_by_hours, keep_tags)
+        if args.delete_older:
+            tags_date = registry.get_datetime_tags(registry, image_name, tags_list)
+            sorted_tags_by_date = sorted(
+                tags_date,
+                 key=lambda x: x["datetime"], reverse=True
+            )
+            tags_list_to_delete = [x["tag"] for x in sorted_tags_by_date][keep_last_versions:]
+            delete_tags(
+                registry, image_name, args.dry_run,
+                tags_list_to_delete, keep_tags)
 
 if __name__ == "__main__":
     args = parse_args()
