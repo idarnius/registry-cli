@@ -300,13 +300,13 @@ class Registry:
 
         return tag_digest
 
-    def get_datetime_tags(self, registry, image_name, tags_list):
+    def get_datetime_tags(self, image_name, tags_list):
         def newer(tag):
-            image_config = registry.get_tag_config(image_name, tag)
+            image_config = self.get_tag_config(image_name, tag)
             if image_config == []:
                 print("tag not found")
                 return None
-            image_age = registry.get_image_age(image_name, image_config)
+            image_age = self.get_image_age(image_name, image_config)
             if image_age == []:
                 print("timestamp not found")
                 return None
@@ -549,7 +549,7 @@ for more detail on garbage collection read here:
         metavar='Hours')
 
     parser.add_argument(
-        '--delete-older',
+        '--keep-newer',
         help=('Will delete all tags that are older than {0}'
               'of all images').format(CONST_KEEP_LAST_VERSIONS),
         default=CONST_KEEP_LAST_VERSIONS,
@@ -826,8 +826,8 @@ def main_loop(args):
             keep_tags.extend(args.keep_tags)
             delete_tags_by_age(registry, image_name, args.dry_run,
                                args.delete_by_hours, keep_tags)
-        if args.delete_older:
-            tags_date = registry.get_datetime_tags(registry, image_name, tags_list)
+        if args.keep_newer:
+            tags_date = registry.get_datetime_tags(image_name, tags_list)
             sorted_tags_by_date = sorted(
                 tags_date,
                  key=lambda x: x["datetime"], reverse=True
