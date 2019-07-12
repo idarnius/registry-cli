@@ -674,7 +674,7 @@ def delete_tags_by_age(registry, image_name, dry_run, hours, tags_to_keep):
     delete_tags(registry, image_name, dry_run, tags_to_delete, tags_to_keep)
 
 
-def keep_newer_tags(registry, image_name, tags_list, args, keep_tags, keep_last_versions):
+def keep_newer_tags(registry, image_name, tags_list, dry_run, keep_tags, keep_last_versions):
     tags_date = registry.get_datetime_tags(image_name, tags_list)
     sorted_tags_by_date = sorted(
         tags_date,
@@ -682,7 +682,7 @@ def keep_newer_tags(registry, image_name, tags_list, args, keep_tags, keep_last_
     )
     tags_list_to_delete = [x["tag"] for x in sorted_tags_by_date][keep_last_versions:]
     delete_tags(
-        registry, image_name, args.dry_run,
+        registry, image_name, dry_run,
         tags_list_to_delete, keep_tags)
 
 
